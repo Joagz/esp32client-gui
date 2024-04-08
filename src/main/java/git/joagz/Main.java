@@ -53,8 +53,9 @@ public class Main {
     private static final Integer PORT = 4321;
 
     private static boolean sendData(Socket socket, String data) {
-        try (OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream())) {
-            ESPDataPacket packet = new ESPDataPacket();
+        try {
+        	OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream());
+        	ESPDataPacket packet = new ESPDataPacket();
             packet.code = data;
             packet.len = data.length();
             packet.foot = FOOT;
