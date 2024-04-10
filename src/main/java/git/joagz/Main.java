@@ -47,10 +47,26 @@ class ESPDataPacket extends ESPConnectionPacket{
 
 public class Main {
 
+    private static final Integer FINGERPRINT_DATA_SIZE = 512;
     private static final Character HEAD = 0x01;
     private static final Character FOOT = 0x04;
     private static final String ADDR = "192.168.100.205";
     private static final Integer PORT = 4321;
+
+    private static char[] recvData(Socket socket) {
+        try (InputStreamReader reader = new InputStreamReader(socket.getInputStream())) {
+            char buffer[] = new char[9];
+            reader.read(buffer); // wait since is blocking
+
+            System.out.println(buffer);
+            return buffer;            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+
+    }
 
     private static boolean sendData(Socket socket, String data) {
         try {
@@ -129,7 +145,13 @@ public class Main {
                 }
 
                 sendData(esp32, text);
+                char[] data = recvData(esp32);
+                
+                if(data == null) {
+                    System.err.println("No data received from ESP32");
+                }
             }
+
         };
         
         JButton btn = new JButton("Send Message");
