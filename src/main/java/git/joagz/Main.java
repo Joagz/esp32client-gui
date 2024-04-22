@@ -1,4 +1,5 @@
 package git.joagz;
+
 import javax.swing.*;
 
 import java.awt.event.*;
@@ -17,7 +18,8 @@ class ESPConnectionPacket {
 
     public char[] serialize() {
         int s_code = this.code.length();
-        if(s_code == 0) return null;
+        if (s_code == 0)
+            return null;
 
         int totalSize = s_code + 2;
 
@@ -25,15 +27,14 @@ class ESPConnectionPacket {
 
         int j = 0;
         arr[j] = this.head;
-        
+
         j++;
-        for(int i = 0; i < s_code; i++)
-        {
+        for (int i = 0; i < s_code; i++) {
             arr[j] = this.code.charAt(i);
             j++;
         }
 
-        arr[j] = this.foot;        
+        arr[j] = this.foot;
 
         System.out.println(arr);
         return arr;
@@ -41,13 +42,14 @@ class ESPConnectionPacket {
 
 }
 
-class ESPDataPacket extends ESPConnectionPacket{
+class ESPDataPacket extends ESPConnectionPacket {
     int len;
 }
 
 public class Main {
 
-    private static final Integer FINGERPRINT_DATA_SIZE = 512;
+    private static final Integer FINGERPRINT_DATA_SIZE_BYTES = 512;
+    private static final Integer HEADER_SIZE_BYTES = 3;
     private static final Character HEAD = 0x01;
     private static final Character FOOT = 0x04;
     private static final String ADDR = "192.168.100.205";
@@ -55,11 +57,11 @@ public class Main {
 
     private static char[] recvData(Socket socket) {
         try (InputStreamReader reader = new InputStreamReader(socket.getInputStream())) {
-            char buffer[] = new char[9];
-            reader.read(buffer); // wait since is blocking
-
+            char buffer[] = new char[FINGERPRINT_DATA_SIZE_BYTES + HEADER_SIZE_BYTES];
+            reader.read(buffer);
+            
             System.out.println(buffer);
-            return buffer;            
+            return buffer;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -70,8 +72,8 @@ public class Main {
 
     private static boolean sendData(Socket socket, String data) {
         try {
-        	OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream());
-        	ESPDataPacket packet = new ESPDataPacket();
+            OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream());
+            ESPDataPacket packet = new ESPDataPacket();
             packet.code = data;
             packet.len = data.length();
             packet.foot = FOOT;
@@ -97,9 +99,9 @@ public class Main {
             packet.head = HEAD;
             packet.foot = FOOT;
             packet.code = "ABC123";
-            
+
             OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream());
-            
+
             writer.write(packet.serialize());
             writer.flush();
 
@@ -124,45 +126,49 @@ public class Main {
         return null;
     }
 
-
-    private static void makeWindow() {        
+    private static void makeWindow() {
         Socket esp32 = connectToServer();
-        
+
         JFrame f = new JFrame();
-        
+
         JTextArea textArea = new JTextArea();
-        textArea.setBounds(250/2, 100, 250, 100);
+        textArea.setBounds(250 / 2, 100, 250, 100);
         textArea.setRows(6);
-        
+
         ActionListener sendMsg = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
 
-            	String text = textArea.getText();
+                String text = textArea.getText();
 
                 if (text.isBlank() || text.isEmpty()) {
-                    return;   
+                    return;
                 }
 
                 sendData(esp32, text);
                 char[] data = recvData(esp32);
-                
-                if(data == null) {
+
+                if (data == null) {
                     System.err.println("No data received from ESP32");
                 }
+                int i = 0;
+                while(data[i] != FOOT) {
+                    
+                }
+
             }
 
         };
-        
+
         JButton btn = new JButton("Send Message");
-        btn.setBounds((500-100)/2, 250, 100, 40);
-        btn.addActionListener(sendMsg);        
+        btn.setBounds((500 - 100) / 2, 250, 100, 40);
+        btn.addActionListener(sendMsg);
 
         f.setResizable(false);
 
         f.add(btn);
         f.add(textArea);
-        
+
         f.setSize(500, 500);
         f.setLayout(null);
         f.setVisible(true);
